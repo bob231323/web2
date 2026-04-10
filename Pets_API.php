@@ -19,9 +19,10 @@
         ]);
 
         $response = curl_exec($ch); // execute API request
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         # if cURL has an error (network/API failure)
-        if (curl_errno($ch)) {
+        if (curl_errno($ch) || $httpCode != 200) {
             curl_close($ch); // close connection
             return null; // return nothing (safe fail)
         }
