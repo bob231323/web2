@@ -1,9 +1,7 @@
-<!--
-    This file was created by student: Bassant Tarek
-    Purpose: Demonstrates API handling using third-party pet APIs (Cats, Dogs, Birds)
--->
-
 <?php
+    //This file was created by student: Bassant Tarek
+    //    Purpose: Demonstrates API handling using third-party pet APIs (Cats, Dogs, Birds)
+
     header("Content-Type: application/json"); // returns JSON instead of HTML
 
     /** Get pet type from URL (example: ?pet=cat) */
