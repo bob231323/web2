@@ -1,12 +1,8 @@
 <?php
 // Database connection 
-$servername = "localhost";
-$username = "user1";
-$password = "12345";
-$dbname = "pet_app";
-
+require_once "config.php";
 // Create connection
-$conn = mysqli_connect($servername, $username, $password);
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
 // Check connection
 if (!$conn) {
