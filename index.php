@@ -57,6 +57,31 @@ function searchPets($conn, $type)
     ]);
 }
 
+function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
+
+    // Validation
+    if (empty($name) || empty($type) || empty($age)) {
+        echo json_encode(["status" => "error", "message" => "Name, type, and age are required"]);
+        return;
+    }
+
+    if (!is_numeric($age) || $age <= 0) {
+        echo json_encode(["status" => "error", "message" => "Age must be a positive number"]);
+        return;
+    }
+
+    // Insert
+    $stmt = mysqli_prepare($conn, "INSERT INTO pets (name, type, breed, age, description, image_path) VALUES (?, ?, ?, ?, ?, ?)");
+   mysqli_stmt_bind_param($stmt, "sssiis", $name, $type, $breed, $age, $description, $image_path);
+
+    if (mysqli_stmt_execute($stmt)) {
+        echo json_encode(["status" => "success", "message" => "Pet added successfully"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Failed to add pet"]);
+    }
+}
+
+
 
 function delete_pet($conn, $name)
 {
@@ -129,6 +154,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ];
             update_pet($conn, $_GET['id'], $record);
         }
+    }
+}
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && $_POST['action'] == "create") {
+        $name        = trim($_POST["name"] ?? "");
+        $type        = trim($_POST["type"] ?? "");
+        $breed       = trim($_POST["breed"] ?? "");
+        $age         = trim($_POST["age"] ?? "");
+        $description = trim($_POST["description"] ?? "");
+        $image_path  = trim($_POST["image_path"] ?? "");
+
+        add_pet($conn, $name, $type, $breed, $age, $description, $image_path);
     }
 }
 ?>
