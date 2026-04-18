@@ -82,21 +82,20 @@ function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
 }
 
 
-
-function delete_pet($conn, $name)
+function delete_pet($conn, $id)
 {
-    $delete_query = mysqli_prepare($conn, "DELETE FROM pets where name = ?");
-    mysqli_stmt_bind_param($delete_query, "s", $name);    // s --> string
+    $delete_query = mysqli_prepare($conn, "DELETE FROM pets where id = ?");
+    mysqli_stmt_bind_param($delete_query, "i", $id);    // i --> int
 
 
-    if (mysqli_stmt_execute($delete_query)) {
-        echo json_encode(
-            ["status" => "success"]
-        );
+    if (mysqli_stmt_execute($delete_query )) {
+        if (mysqli_stmt_affected_rows($delete_query ) > 0) {
+            echo json_encode(["status" => "success", "message" => "Pet deleted"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Pet not found"]);
+        }
     } else {
-        echo json_encode(
-            ["status" => "failed"]
-        );
+        echo json_encode(["status" => "error", "message" => "Delete failed"]);
     }
 
 
@@ -116,13 +115,17 @@ function update_pet($conn, $id, $record)
         $record['age'],
         $record['description'],
         $record['image_path'],
-        $record['id']
+        $id
     );
 
     if (mysqli_stmt_execute($update_record)) {
-        echo json_encode(["status" => "success"]);
+        if (mysqli_stmt_affected_rows($update_record) > 0) {
+            echo json_encode(["status" => "success", "message" => "Pet updated"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Pet not found or no changes made"]);
+        }
     } else {
-        echo json_encode(["status" => "failed"]);
+        echo json_encode(["status" => "error", "message" => "Update failed"]);
     }
 }
 
@@ -139,18 +142,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             searchPets($conn, $_GET['type']);
         }
 
-        if ($_GET['action'] == "delete" && isset($_GET['name'])) {
-            delete_pet($conn, $_GET['name']);
+        if ($_GET['action'] == "delete" && isset($_GET['id'])) {
+            delete_pet($conn, (int)$_GET['id']);
         }
 
         if ($_GET['action'] == "update" && isset($_GET['record'])) {
             $record = [
-                'name' => $_GET['name'],
-                'type' => $_GET['type'],
-                'breed' => $_GET['breed'],
-                'age' => $_GET['age'],
-                'description' => $_GET['description'],
-                'image_path' => $_GET['image_path']
+                // if not found make it ' ' 
+                'name' => $_GET['name'] ?? '',
+                'type' => $_GET['type'] ?? '',
+                'breed' => $_GET['breed'] ?? '',
+                'age' => $_GET['age'] ?? '',
+                'description' => $_GET['description'] ?? '',
+                'image_path' => $_GET['image_path'] ?? ''
             ];
             update_pet($conn, $_GET['id'], $record);
         }
