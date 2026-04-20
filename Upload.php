@@ -50,13 +50,13 @@ if (!in_array($mime_type, $allowed_types)) {
 }
 
 // Create img/ folder if it doesn't exist
-$uploadDir = "img/";
+$uploadDir = "img/uploads/";
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
 // Generate unique filename to avoid overwriting 
-$fileName   = time() . "_" . basename($file["name"]);
+$fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
 $targetPath = $uploadDir . $fileName;   // e.g. "img/1714000000_mydog.jpg"
                                         // this value goes into image_path column in DB
 
