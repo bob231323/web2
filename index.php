@@ -72,7 +72,7 @@ function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
 
     // Insert
     $stmt = mysqli_prepare($conn, "INSERT INTO pets (name, type, breed, age, description, image_path) VALUES (?, ?, ?, ?, ?, ?)");
-   mysqli_stmt_bind_param($stmt, "sssiis", $name, $type, $breed, $age, $description, $image_path);
+   mysqli_stmt_bind_param($stmt, "sssiss", $name, $type, $breed, $age, $description, $image_path);
 
     if (mysqli_stmt_execute($stmt)) {
         echo json_encode(["status" => "success", "message" => "Pet added successfully"]);
