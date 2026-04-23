@@ -86,8 +86,8 @@ body {
 }
 
 .logo-image {
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
     object-fit: contain;
     object-position: center;
 }
@@ -372,7 +372,7 @@ body {
 }
 
 .filter-select {
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1rem;
     border: 2px solid var(--sand);
     border-radius: var(--radius-xl);
     font-family: var(--font-body);
