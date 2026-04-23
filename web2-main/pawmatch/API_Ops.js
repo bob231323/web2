@@ -36,6 +36,6 @@ async function loadPet() {
 /** Load first pet immediately when page opens */
 loadPet();
 
-/**  Repeat function every 3 seconds
+/**  Repeat function every 8 seconds
  * This creates live updating UI without refreshing page */
-setInterval(loadPet, 3000);
+setInterval(loadPet, 8000);
