@@ -1,4 +1,5 @@
 <?php
+header("Content-Type: application/json");
 // Database connection
 require_once "../config.php";   // path adjusted: DB_Ops.php is inside pawmatch/
 // Create connection
@@ -64,7 +65,7 @@ function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
         return;
     }
 
-    if (!is_numeric($age) || $age <= 0) {
+    if (!is_numeric($age) || $age < 0) {
         echo json_encode(["status" => "error", "message" => "Age must be a positive number"]);
         return;
     }
@@ -145,52 +146,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $breed       = trim($_POST["breed"]       ?? "");
         $age         = trim($_POST["age"]         ?? "");
         $description = trim($_POST["description"] ?? "");
-        $image_path  = "";
-
-        // Handle image upload (same validation logic as Upload.php)
-        if (isset($_FILES["image"]) && $_FILES["image"]["error"] === UPLOAD_ERR_OK) {
-            $file         = $_FILES["image"];
-            $allowed_exts = ["jpg", "jpeg", "png"];
-            $allowed_mime = ["image/jpeg", "image/png", "image/jpg"];
-            $ext          = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-            $finfo        = finfo_open(FILEINFO_MIME_TYPE);
-            $mime         = finfo_file($finfo, $file["tmp_name"]);
-            finfo_close($finfo);
-
-            if ($file["size"] > 2 * 1024 * 1024) {
-                header("Location: index.php?msg=error&detail=" . urlencode("File too large. Maximum size is 2MB"));
-                exit();
-            }
-            if (!in_array($ext, $allowed_exts) || !in_array($mime, $allowed_mime)) {
-                header("Location: index.php?msg=error&detail=" . urlencode("Invalid file type. Allowed: JPG, JPEG, PNG"));
-                exit();
-            }
-
-            $uploadDir = __DIR__ . "/../img/uploads/";   // absolute path — works from pawmatch/
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-
-            $fileName   = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
-            $targetPath = $uploadDir . $fileName;
-
-            if (move_uploaded_file($file["tmp_name"], $targetPath)) {
-                $image_path = "img/uploads/" . $fileName;   // stored in DB
-            } else {
-                header("Location: index.php?msg=error&detail=" . urlencode("Upload failed. Please try again"));
-                exit();
-            }
-        }
+        $image_path = $_POST["image_path"] ?? "";
 
         // Call add_pet() exactly as defined above — capture its echo
         ob_start();
         add_pet($conn, $name, $type, $breed, $age, $description, $image_path);
         $result = json_decode(ob_get_clean(), true);
 
-        if (($result["status"] ?? "") === "success") {
-            header("Location: index.php?msg=created");
-        } else {
-            header("Location: index.php?msg=error&detail=" . urlencode($result["message"] ?? "Failed to add pet"));
-        }
-        exit();
+        echo json_encode($result);
+       exit();
     }
 
     // ── UPDATE ───────────────────────────────────────────────────────────────
@@ -198,40 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $id = (int)($_POST["id"] ?? 0);
 
         // Keep the existing image path by default (preserves photo when no new one is uploaded)
-        $image_path = trim($_POST["existing_image"] ?? "");
+        $image_path = $_POST["image_path"] ?? $_POST["existing_image"] ?? "";
 
-        // Only overwrite image_path if a NEW file was actually uploaded
-        if (isset($_FILES["image"]) && $_FILES["image"]["error"] === UPLOAD_ERR_OK) {
-            $file         = $_FILES["image"];
-            $allowed_exts = ["jpg", "jpeg", "png"];
-            $allowed_mime = ["image/jpeg", "image/png", "image/jpg"];
-            $ext          = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-            $finfo        = finfo_open(FILEINFO_MIME_TYPE);
-            $mime         = finfo_file($finfo, $file["tmp_name"]);
-            finfo_close($finfo);
-
-            if ($file["size"] > 2 * 1024 * 1024) {
-                header("Location: index.php?msg=error&detail=" . urlencode("File too large. Maximum size is 2MB"));
-                exit();
-            }
-            if (!in_array($ext, $allowed_exts) || !in_array($mime, $allowed_mime)) {
-                header("Location: index.php?msg=error&detail=" . urlencode("Invalid file type. Allowed: JPG, JPEG, PNG"));
-                exit();
-            }
-
-            $uploadDir = __DIR__ . "/../img/uploads/";   // absolute path — works from pawmatch/
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-
-            $fileName   = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
-            $targetPath = $uploadDir . $fileName;
-
-            if (move_uploaded_file($file["tmp_name"], $targetPath)) {
-                $image_path = "img/uploads/" . $fileName;   // replace with new upload
-            } else {
-                header("Location: index.php?msg=error&detail=" . urlencode("Upload failed. Please try again"));
-                exit();
-            }
-        }
         // If no file uploaded, $image_path stays as existing_image — old photo is kept.
 
         // Build $record exactly as root index.php does in its GET handler
@@ -249,12 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         update_pet($conn, $id, $record);
         $result = json_decode(ob_get_clean(), true);
 
-        if (($result["status"] ?? "") === "success") {
-            header("Location: index.php?msg=updated");
-        } else {
-            header("Location: index.php?msg=error&detail=" . urlencode($result["message"] ?? "Update failed"));
-        }
-        exit();
+        echo json_encode($result);
+exit();
     }
 
     // ── DELETE ───────────────────────────────────────────────────────────────
@@ -266,12 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         delete_pet($conn, $id);
         $result = json_decode(ob_get_clean(), true);
 
-        if (($result["status"] ?? "") === "success") {
-            header("Location: index.php?msg=deleted");
-        } else {
-            header("Location: index.php?msg=error&detail=" . urlencode($result["message"] ?? "Delete failed"));
-        }
-        exit();
+        echo json_encode($result);
+exit();
     }
 }
 
