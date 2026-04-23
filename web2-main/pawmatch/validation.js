@@ -330,6 +330,7 @@ function openEditModal(pet) {
     document.getElementById("edit-breed").value       = pet.breed       || "";
     document.getElementById("edit-age").value         = pet.age         || "";
     document.getElementById("edit-description").value = pet.description || "";
+    document.getElementById("edit-existing-image").value = pet.image_path || "";
 
     document.getElementById("edit-modal-overlay").classList.add("open");
     document.getElementById("edit-name").focus();
@@ -506,8 +507,9 @@ function _buildPetCard(pet, index) {
     };
     const emoji = typeEmoji[pet.type] || "🐾";
 
-    const imageHtml = pet.image_path
-        ? `<img src="${_escapeHtml(pet.image_path)}" alt="${_escapeHtml(pet.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<span style=font-size:4rem>${emoji}</span>'">`
+    const imageSrc = pet.image_path ? `../${String(pet.image_path).replace(/^\/+/, "")}` : "";
+    const imageHtml = imageSrc
+        ? `<img src="${_escapeHtml(imageSrc)}" alt="${_escapeHtml(pet.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<span style=font-size:4rem>${emoji}</span>'">`
         : `<span style="font-size:4rem">${emoji}</span>`;
 
     const breedMeta = pet.breed ? `${_escapeHtml(pet.breed)} · ` : "";
