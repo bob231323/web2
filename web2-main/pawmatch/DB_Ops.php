@@ -133,8 +133,19 @@ function update_pet($conn, $id, $record)
     if (mysqli_stmt_execute($update_record)) {
         if (mysqli_stmt_affected_rows($update_record) > 0) {
             echo json_encode(["status" => "success", "message" => "Pet updated"]);
+            return;
+        }
+
+        // MySQL may return 0 affected rows even on a valid request.
+        $check_query = mysqli_prepare($conn, "SELECT id FROM pets WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($check_query, "i", $id);
+        mysqli_stmt_execute($check_query);
+        $exists_result = mysqli_stmt_get_result($check_query);
+
+        if ($exists_result && mysqli_num_rows($exists_result) > 0) {
+            echo json_encode(["status" => "success", "message" => "Pet updated"]);
         } else {
-            echo json_encode(["status" => "error", "message" => "Pet not found or no changes made"]);
+            echo json_encode(["status" => "error", "message" => "Pet not found"]);
         }
     } else {
         echo json_encode(["status" => "error", "message" => "Update failed"]);
