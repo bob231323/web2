@@ -141,6 +141,56 @@ function update_pet($conn, $id, $record)
     }
 }
 
+function handle_uploaded_image($file, $existingPath = "")
+{
+    if (!isset($file) || $file["error"] === UPLOAD_ERR_NO_FILE) {
+        return ["status" => "success", "image_path" => $existingPath];
+    }
+
+    if ($file["error"] !== UPLOAD_ERR_OK) {
+        return ["status" => "error", "message" => "Upload error. Please try again."];
+    }
+
+    if ($file["size"] > 2 * 1024 * 1024) {
+        return ["status" => "error", "message" => "File too large. Maximum size is 2MB."];
+    }
+
+    $allowedExts = ["jpg", "jpeg", "png"];
+    $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+    if (!in_array($ext, $allowedExts, true)) {
+        return ["status" => "error", "message" => "Invalid file type. Allowed: JPG, JPEG, PNG."];
+    }
+
+    $allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file["tmp_name"]);
+    finfo_close($finfo);
+    if (!in_array($mimeType, $allowedMimeTypes, true)) {
+        return ["status" => "error", "message" => "Invalid file content. Only real images are allowed."];
+    }
+
+    $uploadDir = "../img/uploads/";
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
+        return ["status" => "error", "message" => "Failed to create upload directory."];
+    }
+
+    $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
+    $targetPath = $uploadDir . $fileName;
+
+    if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
+        return ["status" => "error", "message" => "Upload failed. Please try again."];
+    }
+
+    if (!empty($existingPath)) {
+        $existingFullPath = "../" . ltrim($existingPath, "/");
+        if (is_file($existingFullPath)) {
+            @unlink($existingFullPath);
+        }
+    }
+
+    return ["status" => "success", "image_path" => "img/uploads/" . $fileName];
+}
+
 // ── LIST (AJAX) ───────────────────────────────────────────────────────────────
 // AJAX: return all pets for frontend re-render after CRUD.
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['action'] ?? '') === 'list')) {
@@ -166,7 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $breed       = trim($_POST["breed"]       ?? "");
         $age         = trim($_POST["age"]         ?? "");
         $description = trim($_POST["description"] ?? "");
-        $image_path = $_POST["image_path"] ?? "";
+        $upload = handle_uploaded_image($_FILES["image"] ?? null);
+        if (($upload["status"] ?? "error") !== "success") {
+            echo json_encode($upload);
+            exit();
+        }
+        $image_path = $upload["image_path"] ?? "";
 
         // Call add_pet() exactly as defined above — capture its echo
         ob_start();
@@ -182,7 +237,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $id = (int)($_POST["id"] ?? 0);
 
         // Keep the existing image path by default (preserves photo when no new one is uploaded)
-        $image_path = $_POST["image_path"] ?? $_POST["existing_image"] ?? "";
+        $existingImage = $_POST["existing_image"] ?? "";
+        $upload = handle_uploaded_image($_FILES["image"] ?? null, $existingImage);
+        if (($upload["status"] ?? "error") !== "success") {
+            echo json_encode($upload);
+            exit();
+        }
+        $image_path = $upload["image_path"] ?? $existingImage;
 
         // If no file uploaded, $image_path stays as existing_image — old photo is kept.
 

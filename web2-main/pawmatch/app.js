@@ -60,7 +60,7 @@ window.onDeleteConfirmed = async function (petId) {
 
     try {
         // Send delete request without page reload.
-        const response = await fetch("index.php", {
+        const response = await fetch("DB_Ops.php", {
             method: "POST",
             body: payload
         });
@@ -154,7 +154,7 @@ async function submitPetForm(form, prefix, successMessage, onSuccess) {
     try {
         // FormData includes text fields + selected image file.
         const formData = new FormData(form);
-        const response = await fetch("index.php", {
+        const response = await fetch("DB_Ops.php", {
             method: "POST",
             body: formData
         });
