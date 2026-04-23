@@ -348,9 +348,15 @@ function e($str) {
 
 <?php include 'footer.php'; ?>
 
-<script src="validation.js"></script>
-<script src="API_Ops.js"></script>
-<script src="app.js"></script>
+<?php
+// Cache-bust JS files so browser always loads latest edits during development.
+$validationVer = @filemtime(__DIR__ . '/validation.js') ?: time();
+$apiOpsVer = @filemtime(__DIR__ . '/API_Ops.js') ?: time();
+$appVer = @filemtime(__DIR__ . '/app.js') ?: time();
+?>
+<script src="validation.js?v=<?php echo $validationVer; ?>"></script>
+<script src="API_Ops.js?v=<?php echo $apiOpsVer; ?>"></script>
+<script src="app.js?v=<?php echo $appVer; ?>"></script>
 
 </body>
 </html>

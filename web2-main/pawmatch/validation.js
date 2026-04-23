@@ -608,9 +608,21 @@ function handleClear() {
     }
 }
 
-/* Allow Enter key to trigger search */
+/* Live search + Enter key support */
 document.addEventListener("DOMContentLoaded", () => {
     const input = document.getElementById("search-input");
+    const filter = document.getElementById("type-filter");
+
+    if (input) {
+        // Search as the user types.
+        input.addEventListener("input", () => handleSearch());
+    }
+
+    if (filter) {
+        // Re-run search when type filter changes.
+        filter.addEventListener("change", () => handleSearch());
+    }
+
     if (input) {
         input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") handleSearch();

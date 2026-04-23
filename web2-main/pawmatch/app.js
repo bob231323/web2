@@ -97,15 +97,23 @@ document.addEventListener("DOMContentLoaded", function () {
 window.onSearch = function ({ query, type }) {
     const q = (query || "").toLowerCase().trim();
     const t = (type  || "").toLowerCase().trim();
+    const normalizedQuery = q.replace(/\b(yr|yrs|year|years)\b/g, "").trim();
+    const hasOnlyAgeUnit = !!q && !normalizedQuery;
 
     let visibleCount = 0;
 
     _allCards.forEach(card => {
         const name  = (card.querySelector(".pet-card-name")?.textContent  || "").toLowerCase();
         const meta  = (card.querySelector(".pet-card-meta")?.textContent  || "").toLowerCase();
+        const desc  = (card.querySelector(".pet-card-desc")?.textContent  || "").toLowerCase();
         const badge = (card.querySelector(".pet-card-type")?.textContent  || "").toLowerCase();
 
-        const matchesQuery = !q || name.includes(q) || meta.includes(q);
+        // meta is shown as "breed · age yrs"; keep only breed for search
+        const breed = meta.includes("·") ? meta.split("·")[0].trim() : "";
+
+        const matchesQuery = hasOnlyAgeUnit
+            ? false
+            : (!normalizedQuery || name.includes(normalizedQuery) || breed.includes(normalizedQuery) || desc.includes(normalizedQuery) || badge.includes(normalizedQuery));
         const matchesType  = !t || badge.includes(t);
 
         if (matchesQuery && matchesType) {
