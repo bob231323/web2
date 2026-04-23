@@ -3,108 +3,81 @@
  * Person 7 | IS333 Spring 2026
  *
  * Client-side glue between the frontend UI (validation.js) and the
- * traditional PHP form submission backend (DB_Ops.php).
+ * AJAX backend flow (DB_Ops.php).
  *
  * Responsibilities:
- *  - Intercept Add / Edit form submits → run validation before allowing POST
- *  - Handle delete → submit hidden form to DB_Ops.php via index.php
- *  - Show toast messages from URL query params (?msg=created|updated|deleted|error)
- *  - Client-side search/filter on the already-rendered pet cards (no AJAX)
+ *  - Intercept Add / Edit form submits and send AJAX requests
+ *  - Handle delete with AJAX
+ *  - Refresh pets grid from backend JSON without page reload
+ *  - Client-side search/filter on the rendered pet cards
  */
 
 "use strict";
 
 /* ════════════════════════════════════════════
-   1. TOAST FROM URL PARAMS
-   After a form submission, DB_Ops.php redirects back to
-   index.php?msg=created|updated|deleted|error&detail=...
-   We read those params and show the appropriate toast.
-════════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", function () {
-    const params = new URLSearchParams(window.location.search);
-    const msg    = params.get("msg");
-    const detail = params.get("detail");
-
-    if (msg === "created") {
-        showSuccess("Pet added successfully!");
-    } else if (msg === "updated") {
-        showSuccess("Pet updated successfully!");
-    } else if (msg === "deleted") {
-        showSuccess("Pet deleted successfully!");
-    } else if (msg === "error") {
-        showError(detail ? decodeURIComponent(detail) : "Something went wrong. Please try again.");
-    }
-
-    // Clean the URL so refresh doesn't re-show the toast
-    if (msg) {
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
-});
-
-/* ════════════════════════════════════════════
-   2. FORM SUBMIT INTERCEPTORS
-   Run client-side validation (from validation.js) before
-   allowing the native form POST to go through to DB_Ops.php.
+  1. FORM SUBMIT INTERCEPTORS (AJAX)
 ════════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", function () {
 
     // ── Add Pet form ─────────────────────────────────────────────────────────
     const addForm = document.getElementById("add-pet-form");
     if (addForm) {
-        addForm.addEventListener("submit", function (e) {
+        addForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
             const isValid = validateAddForm();   // from validation.js
             if (!isValid) {
-                e.preventDefault();              // block submission if invalid
                 return;
             }
             setLoading("add", true);             // show spinner while submitting
+            await submitPetForm(addForm, "add", "Pet added successfully!", closeAddModal);
         });
     }
 
     // ── Edit Pet form ─────────────────────────────────────────────────────────
     const editForm = document.getElementById("edit-pet-form");
     if (editForm) {
-        editForm.addEventListener("submit", function (e) {
+        editForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
             const isValid = validateEditForm();  // from validation.js
             if (!isValid) {
-                e.preventDefault();
                 return;
             }
             setLoading("edit", true);
+            await submitPetForm(editForm, "edit", "Pet updated successfully!", closeEditModal);
         });
     }
 });
 
 /* ════════════════════════════════════════════
-   3. DELETE — submit hidden form
+  2. DELETE (AJAX)
    validation.js calls window.onDeleteConfirmed(petId)
-   when the user confirms deletion. We create a hidden form
-   and POST it to index.php (which is handled by DB_Ops.php).
+  when the user confirms deletion.
 ════════════════════════════════════════════ */
-window.onDeleteConfirmed = function (petId) {
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "index.php";
+window.onDeleteConfirmed = async function (petId) {
+    const payload = new FormData();
+    payload.append("action", "delete");
+    payload.append("id", petId);
 
-    const actionInput  = document.createElement("input");
-    actionInput.type   = "hidden";
-    actionInput.name   = "action";
-    actionInput.value  = "delete";
-
-    const idInput      = document.createElement("input");
-    idInput.type       = "hidden";
-    idInput.name       = "id";
-    idInput.value      = petId;
-
-    form.appendChild(actionInput);
-    form.appendChild(idInput);
-    document.body.appendChild(form);
-    form.submit();
+    try {
+        // Send delete request without page reload.
+        const response = await fetch("index.php", {
+            method: "POST",
+            body: payload
+        });
+        const result = await response.json();
+        if (result.status === "success") {
+            await refreshPetsFromServer();
+            showSuccess("Pet deleted successfully!");
+        } else {
+            showError(result.message || "Delete failed.");
+        }
+    } catch (error) {
+        showError("Delete failed. Please try again.");
+    }
 };
 
 /* ════════════════════════════════════════════
-   4. CLIENT-SIDE SEARCH / FILTER
+  3. CLIENT-SIDE SEARCH / FILTER
    validation.js calls window.onSearch({ query, type })
    and window.onClear(). We filter the already-rendered
    pet cards without a page reload.
@@ -173,3 +146,43 @@ window.onClear = function () {
     const searchEmpty = document.getElementById("search-empty");
     if (searchEmpty) searchEmpty.remove();
 };
+
+/* ════════════════════════════════════════════
+  4. AJAX HELPERS
+════════════════════════════════════════════ */
+async function submitPetForm(form, prefix, successMessage, onSuccess) {
+    try {
+        // FormData includes text fields + selected image file.
+        const formData = new FormData(form);
+        const response = await fetch("index.php", {
+            method: "POST",
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+            await refreshPetsFromServer();
+            if (typeof onSuccess === "function") onSuccess();
+            showSuccess(successMessage);
+        } else {
+            showError(result.message || "Something went wrong.");
+        }
+    } catch (error) {
+        showError("Request failed. Please try again.");
+    } finally {
+        setLoading(prefix, false);
+    }
+}
+
+async function refreshPetsFromServer() {
+    // Pull fresh data from PHP API, then rebuild cards in-place.
+    const response = await fetch("DB_Ops.php?action=list");
+    const result = await response.json();
+
+    if (result.status !== "success") {
+        throw new Error(result.message || "Failed to load pets.");
+    }
+
+    renderPets(result.data || []);
+    _allCards = Array.from(document.querySelectorAll("#pets-grid .pet-card"));
+}

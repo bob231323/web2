@@ -1,5 +1,13 @@
 <?php
-header("Content-Type: application/json");
+// Detect API calls so normal page loads are not forced to JSON.
+$isAjaxRequest = (
+    ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) ||
+    ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['action'] ?? '') === 'list'))
+);
+
+if ($isAjaxRequest) {
+    header("Content-Type: application/json");
+}
 // Database connection
 require_once "../config.php";   // path adjusted: DB_Ops.php is inside pawmatch/
 // Create connection
@@ -7,10 +15,14 @@ $conn = mysqli_connect($servername, $username, $password, $dbname);
 
 // Check connection
 if (!$conn) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Connection failed: " . mysqli_connect_error()
-    ]);
+    if ($isAjaxRequest) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Connection failed: " . mysqli_connect_error()
+        ]);
+    } else {
+        echo "Connection failed: " . mysqli_connect_error();
+    }
     exit();
 }
 // (removed: echo "Connected successfully" — would break page HTML)
@@ -129,6 +141,13 @@ function update_pet($conn, $id, $record)
     }
 }
 
+// ── LIST (AJAX) ───────────────────────────────────────────────────────────────
+// AJAX: return all pets for frontend re-render after CRUD.
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['action'] ?? '') === 'list')) {
+    getAllPets($conn);
+    exit();
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    FORM SUBMISSION HANDLER
    Calls the exact same functions above, captures their JSON echo via
@@ -137,6 +156,7 @@ function update_pet($conn, $id, $record)
 ════════════════════════════════════════════════════════════════════════ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
+    // AJAX actions: create | update | delete
     $action = $_POST['action'];
 
     // ── CREATE ───────────────────────────────────────────────────────────────
@@ -197,6 +217,9 @@ exit();
         echo json_encode($result);
 exit();
     }
+
+    echo json_encode(["status" => "error", "message" => "Invalid action"]);
+    exit();
 }
 
 /* ════════════════════════════════════════════════════════════════════════
