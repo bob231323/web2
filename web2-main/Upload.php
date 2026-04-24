@@ -1,4 +1,9 @@
 <?php
+/* ════════════════════════════════════════════
+   IMAGE UPLOAD HANDLER
+   Processes and validates uploaded pet images
+════════════════════════════════════════════ */
+
 // This path is then passed by JavaScript to index.php (add_pet function) as image_path
 
 header("Content-Type: application/json");
