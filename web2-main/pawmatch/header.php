@@ -1,4 +1,9 @@
-<?php // header.php ?>
+<?php
+/* ════════════════════════════════════════════
+   SITE HEADER
+   Navigation and branding components
+════════════════════════════════════════════ */
+?>
 <header class="site-header">
     <div class="header-inner">
         <div class="logo">
