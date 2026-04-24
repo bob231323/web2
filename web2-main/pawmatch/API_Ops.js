@@ -1,5 +1,7 @@
-// This file was created by student: Bassant Tarek
-// Purpose: Demonstrates API handling using third-party pet APIs (Cats, Dogs, Birds)
+/* ════════════════════════════════════════════
+   FRONTEND API HANDLER
+   Fetches pet facts from backend and updates UI dynamically
+════════════════════════════════════════════ */
 
 /** List of pets that will be shown in order */
 let pets = ["cat", "dog", "bird"];
