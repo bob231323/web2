@@ -1,4 +1,9 @@
-<?php // footer.php ?>
+<?php
+/* ════════════════════════════════════════════
+   SITE FOOTER
+   Branding and attribution components
+════════════════════════════════════════════ */
+?>
 <footer class="site-footer">
     <div class="footer-inner">
         <div class="footer-brand">
