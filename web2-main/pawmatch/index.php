@@ -238,7 +238,7 @@ function e($str) {
 </div>
 
 <!-- ══════════════════════════════════════
-     EDIT PET MODAL (form POSTs to process.php)
+     EDIT PET MODAL
 ══════════════════════════════════════ -->
 <div class="modal-overlay" id="edit-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
     <div class="modal">
