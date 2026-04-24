@@ -1,7 +1,4 @@
 /**
- * app.js
- * Person 7 | IS333 Spring 2026
- *
  * Client-side glue between the frontend UI (validation.js) and the
  * AJAX backend flow (DB_Ops.php).
  *
