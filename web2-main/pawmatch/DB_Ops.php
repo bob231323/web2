@@ -1,4 +1,9 @@
 <?php
+/* ════════════════════════════════════════════
+   DATABASE OPERATIONS
+   Handles CRUD operations for pets database
+════════════════════════════════════════════ */
+
 // Detect API calls so normal page loads are not forced to JSON.
 $isAjaxRequest = (
     ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) ||
@@ -8,9 +13,11 @@ $isAjaxRequest = (
 if ($isAjaxRequest) {
     header("Content-Type: application/json");
 }
-// Database connection
-require_once "../config.php";   // path adjusted: DB_Ops.php is inside pawmatch/
-// Create connection
+
+/* ════════════════════════════════════════════
+   DATABASE CONNECTION
+════════════════════════════════════════════ */
+require_once "../config.php";
 $conn = mysqli_connect($servername, $username, $password, $dbname);
 
 // Check connection
@@ -25,13 +32,14 @@ if (!$conn) {
     }
     exit();
 }
-// (removed: echo "Connected successfully" — would break page HTML)
 
+/* ════════════════════════════════════════════
+   DATABASE QUERIES
+════════════════════════════════════════════ */
 
-//show pets
+/** Get all pets from database */
 function getAllPets($conn)
 {
-
     $sql = "SELECT * FROM pets ORDER BY created_at DESC";
     $result = mysqli_query($conn, $sql);
 
@@ -47,10 +55,9 @@ function getAllPets($conn)
     ]);
 }
 
-
+/** Search pets by type */
 function searchPets($conn, $type)
 {
-
     $stmt = mysqli_prepare($conn, "SELECT * FROM pets WHERE type = ?");
     mysqli_stmt_bind_param($stmt, "s", $type);
     mysqli_stmt_execute($stmt);
@@ -69,8 +76,8 @@ function searchPets($conn, $type)
     ]);
 }
 
+/** Add new pet to database */
 function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
-
     // Validation
     if (empty($name) || empty($type) || empty($age)) {
         echo json_encode(["status" => "error", "message" => "Name, type, and age are required"]);
@@ -84,7 +91,7 @@ function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
 
     // Insert
     $stmt = mysqli_prepare($conn, "INSERT INTO pets (name, type, breed, age, description, image_path) VALUES (?, ?, ?, ?, ?, ?)");
-   mysqli_stmt_bind_param($stmt, "sssiss", $name, $type, $breed, $age, $description, $image_path);
+    mysqli_stmt_bind_param($stmt, "sssiss", $name, $type, $breed, $age, $description, $image_path);
 
     if (mysqli_stmt_execute($stmt)) {
         echo json_encode(["status" => "success", "message" => "Pet added successfully"]);
@@ -93,7 +100,7 @@ function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
     }
 }
 
-
+/** Delete pet from database */
 function delete_pet($conn, $id)
 {
     $delete_query = mysqli_prepare($conn, "DELETE FROM pets where id = ?");
@@ -109,11 +116,9 @@ function delete_pet($conn, $id)
     } else {
         echo json_encode(["status" => "error", "message" => "Delete failed"]);
     }
-
-
 }
 
-
+/** Update pet in database */
 function update_pet($conn, $id, $record)
 {
     $update_record = mysqli_prepare($conn, "UPDATE pets SET name=?, type=?, breed=?, age=?, description=?, image_path=?  Where id=?");
@@ -152,26 +157,36 @@ function update_pet($conn, $id, $record)
     }
 }
 
+/* ════════════════════════════════════════════
+   FILE UPLOAD HANDLER
+════════════════════════════════════════════ */
+
+/** Handle uploaded image files with validation */
 function handle_uploaded_image($file, $existingPath = "")
 {
+    // Check if no file uploaded
     if (!isset($file) || $file["error"] === UPLOAD_ERR_NO_FILE) {
         return ["status" => "success", "image_path" => $existingPath];
     }
 
+    // Check for upload errors
     if ($file["error"] !== UPLOAD_ERR_OK) {
         return ["status" => "error", "message" => "Upload error. Please try again."];
     }
 
+    // Validate file size (max 2MB)
     if ($file["size"] > 2 * 1024 * 1024) {
         return ["status" => "error", "message" => "File too large. Maximum size is 2MB."];
     }
 
+    // Validate file extension
     $allowedExts = ["jpg", "jpeg", "png"];
     $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
     if (!in_array($ext, $allowedExts, true)) {
         return ["status" => "error", "message" => "Invalid file type. Allowed: JPG, JPEG, PNG."];
     }
 
+    // Validate MIME type
     $allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mimeType = finfo_file($finfo, $file["tmp_name"]);
@@ -180,18 +195,22 @@ function handle_uploaded_image($file, $existingPath = "")
         return ["status" => "error", "message" => "Invalid file content. Only real images are allowed."];
     }
 
+    // Create upload directory if needed
     $uploadDir = "../img/uploads/";
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
         return ["status" => "error", "message" => "Failed to create upload directory."];
     }
 
+    // Generate unique filename
     $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
     $targetPath = $uploadDir . $fileName;
 
+    // Move uploaded file
     if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
         return ["status" => "error", "message" => "Upload failed. Please try again."];
     }
 
+    // Remove old file if exists
     if (!empty($existingPath)) {
         $existingFullPath = "../" . ltrim($existingPath, "/");
         if (is_file($existingFullPath)) {
