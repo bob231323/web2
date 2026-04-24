@@ -199,10 +199,10 @@ function handle_uploaded_image($file, $existingPath = "")
     }
 
     // Create upload directory if needed
-    $uploadDir = "../img/uploads/";
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
-        return ["status" => "error", "message" => "Failed to create upload directory."];
-    }
+    $uploadDir = "/img/uploads/";
+//    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
+//        return ["status" => "error", "message" => "Failed to create upload directory."];
+//    }
 
     // Generate unique filename
     $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);

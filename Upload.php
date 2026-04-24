@@ -55,10 +55,12 @@ if (!in_array($mime_type, $allowed_types)) {
 }
 
 // Create img/ folder if it doesn't exist
-$uploadDir = "img/uploads/";
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-}
+//$uploadDir = "img/uploads/";
+//if (!is_dir($uploadDir)) {
+//    mkdir($uploadDir, 0777, true);
+//}
+
+$uploadDir = "/img/uploads/";
 
 // Generate unique filename to avoid overwriting 
 $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
