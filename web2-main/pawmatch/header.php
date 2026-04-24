@@ -7,7 +7,7 @@
 <header class="site-header">
     <div class="header-inner">
         <div class="logo">
-            <img src="img/logo.png" alt="Littlest Logo" class="logo-image">
+            <img src="../img/logo.png" alt="Littlest Logo" class="logo-image">
         </div>
         <nav class="nav-links">
             <a href="#browse" class="nav-link" onclick="scrollToSection('browse-section')">Browse</a>

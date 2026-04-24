@@ -44,7 +44,7 @@ function e($str) {
         </div>
         <div class="hero-visual">
             <div class="hero-blob"></div>
-            <img src="img/Dog2.png" alt="">
+            <img src="../img/Dog2.png" alt="">
             <div class="hero-stat-chips">
                 <div class="stat-chip"><span id="chip-count"><?php echo count($pets); ?></span>Pets Listed</div>
                 <div class="stat-chip"><span>♥</span>Find a Home</div>
