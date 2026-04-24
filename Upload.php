@@ -54,12 +54,6 @@ if (!in_array($mime_type, $allowed_types)) {
     exit();
 }
 
-// Create img/ folder if it doesn't exist
-//$uploadDir = "img/uploads/";
-//if (!is_dir($uploadDir)) {
-//    mkdir($uploadDir, 0777, true);
-//}
-
 $uploadDir = "/img/uploads/";
 
 // Generate unique filename to avoid overwriting 

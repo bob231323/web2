@@ -58,28 +58,6 @@ function getAllPets($conn)
     ]);
 }
 
-/** this function is never used */
-///** Search pets by type */
-//function searchPets($conn, $type)
-//{
-//    $stmt = mysqli_prepare($conn, "SELECT * FROM pets WHERE type = ?");
-//    mysqli_stmt_bind_param($stmt, "s", $type);
-//    mysqli_stmt_execute($stmt);
-//
-//    $result = mysqli_stmt_get_result($stmt);
-//
-//    $pets = [];
-//
-//    while ($row = mysqli_fetch_assoc($result)) {
-//        $pets[] = $row;
-//    }
-//
-//    echo json_encode([
-//        "status" => "success",
-//        "data" => $pets
-//    ]);
-//}
-
 /** Add new pet to database */
 function add_pet($conn, $name, $type, $breed, $age, $description, $image_path) {
     // Validation
@@ -166,96 +144,43 @@ function update_pet($conn, $id, $record)
 ════════════════════════════════════════════ */
 
 /** Handle uploaded image files with validation */
-//function handle_uploaded_image($file, $existingPath = "")
-//{
-//    // Check if no file uploaded
-//    if (!isset($file) || $file["error"] === UPLOAD_ERR_NO_FILE) {
-//        return ["status" => "success", "image_path" => $existingPath];
-//    }
-//
-//    // Check for upload errors
-//    if ($file["error"] !== UPLOAD_ERR_OK) {
-//        return ["status" => "error", "message" => "Upload error. Please try again."];
-//    }
-//
-//    // Validate file size (max 2MB)
-//    if ($file["size"] > 2 * 1024 * 1024) {
-//        return ["status" => "error", "message" => "File too large. Maximum size is 2MB."];
-//    }
-//
-//    // Validate file extension
-//    $allowedExts = ["jpg", "jpeg", "png"];
-//    $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-//    if (!in_array($ext, $allowedExts, true)) {
-//        return ["status" => "error", "message" => "Invalid file type. Allowed: JPG, JPEG, PNG."];
-//    }
-//
-//    // Validate MIME type
-//    $allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-//    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-//    $mimeType = finfo_file($finfo, $file["tmp_name"]);
-//    finfo_close($finfo);
-//    if (!in_array($mimeType, $allowedMimeTypes, true)) {
-//        return ["status" => "error", "message" => "Invalid file content. Only real images are allowed."];
-//    }
-//
-//    // Create upload directory if needed
-//    $uploadDir = "/img/uploads/";
-////    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
-////        return ["status" => "error", "message" => "Failed to create upload directory."];
-////    }
-//
-//    // Generate unique filename
-//    $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
-//    $targetPath = $uploadDir . $fileName;
-//
-//    // Move uploaded file
-//    if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-//        return ["status" => "error", "message" => "Upload failed. Please try again."];
-//    }
-//
-//    // Remove old file if exists
-//    if (!empty($existingPath)) {
-//        $existingFullPath = "../" . ltrim($existingPath, "/");
-//        if (is_file($existingFullPath)) {
-//            @unlink($existingFullPath);
-//        }
-//    }
-//
-//    return ["status" => "success", "image_path" => "img/uploads/" . $fileName];
-//}
-
-/** Handle uploaded image files with validation */
 function handle_uploaded_image($file, $existingPath = "")
 {
-    // ... (keep your existing validation code at the top)
-
-    // 1. Define the folder relative to your website root
-    $subDir = "img/uploads/";
-
-    // 2. Create the ABSOLUTE path for the server to move the file
-    // This will result in something like: /home/vol12_3/epizy_xxxx/htdocs/img/uploads/
-    $uploadDir = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . $subDir;
-
-    // 3. Ensure the directory exists
-    if (!is_dir($uploadDir)) {
-        if (!mkdir($uploadDir, 0777, true)) {
-            return ["status" => "error", "message" => "Directory creation failed. Create 'img/uploads' manually via FTP/File Manager."];
-        }
+    // 1. EARLY EXIT: If no new file is uploaded, keep the old one.
+    // This prevents the "Move failed" error during edits.
+    if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+        return ["status" => "success", "image_path" => $existingPath];
     }
 
-    // 4. Generate unique filename
+    // 2. CHECK FOR OTHER UPLOAD ERRORS
+    if ($file["error"] !== UPLOAD_ERR_OK) {
+        return ["status" => "error", "message" => "Upload error code: " . $file["error"]];
+    }
+
+    // ... (Keep your validation code for size/type here) ...
+
+    $subDir = "img/uploads/";
+    $uploadDir = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . $subDir;
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
     $fileName = time() . "_" . bin2hex(random_bytes(4)) . "_" . basename($file["name"]);
     $targetPath = $uploadDir . $fileName;
 
-    // 5. Move uploaded file
-    if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-        return ["status" => "error", "message" => "Move failed. Check folder permissions (CHMOD 755 or 777)."];
-    }
+    // 3. ONLY MOVE IF WE HAVE A FILE
+    if (move_uploaded_file($file["tmp_name"], $targetPath)) {
 
-    // 6. Return the RELATIVE path for the database
-    // You want to save "img/uploads/file.jpg" in the DB so your <img> tags work.
-    return ["status" => "success", "image_path" => $subDir . $fileName];
+        // OPTIONAL: Delete the old file from the server to save space
+        if (!empty($existingPath) && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $existingPath)) {
+            @unlink($_SERVER['DOCUMENT_ROOT'] . '/' . $existingPath);
+        }
+
+        return ["status" => "success", "image_path" => $subDir . $fileName];
+    } else {
+        return ["status" => "error", "message" => "Move failed. Check permissions on " . $subDir];
+    }
 }
 
 // ── LIST (AJAX) ───────────────────────────────────────────────────────────────
