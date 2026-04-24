@@ -1,31 +1,6 @@
 /**
  * validation.js
- * Person 8 | IS333 Spring 2026
  * Client-side validation, UX helpers, and UI utilities.
- *
- * PUBLIC API (Person 7 calls these):
- *   validateAddForm()       → boolean
- *   validateEditForm()      → boolean
- *   showSuccess(message)    → void
- *   showError(message)      → void
- *   setLoading(formId, bool)→ void
- *   openAddModal()          → void
- *   closeAddModal()         → void
- *   openEditModal(petData)  → void
- *   closeEditModal()        → void
- *   openConfirm(petId)      → void
- *   closeConfirm()          → void
- *   confirmDelete()         → void (calls window.onDeleteConfirmed if set)
- *   scrollToSection(id)     → void
- *   toggleMobileMenu()      → void
- *   handleSearch()          → void (calls window.onSearch if set)
- *   handleClear()           → void (calls window.onClear if set)
- *   renderPets(petsArray)   → void
- *   renderEmpty()           → void
- *   clearSkeletons()        → void
- *   updatePetCount(n)       → void
- *   handleFileSelect(input, prefix) → void
- *   removeFile(prefix)      → void
  */
 
 "use strict";
@@ -384,7 +359,7 @@ function closeConfirm() {
 
 /**
  * Called when user clicks "Yes, Delete".
- * Calls window.onDeleteConfirmed(petId) if Person 7 sets it.
+ * Calls window.onDeleteConfirmed(petId) if the function is set.
  */
 function confirmDelete() {
     const id = _pendingDeleteId;
@@ -467,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ════════════════════════════════════════════
-   PUBLIC: RENDER HELPERS (for Person 7)
+   PUBLIC: RENDER HELPERS
 ════════════════════════════════════════════ */
 
 /**
@@ -584,7 +559,7 @@ function toggleMobileMenu() {
 
 /**
  * Called when Search button is clicked.
- * Calls window.onSearch({ query, type }) if Person 7 sets it.
+ * Calls window.onSearch({ query, type }) if the function is set.
  */
 function handleSearch() {
     const query = (document.getElementById("search-input")?.value || "").trim();
