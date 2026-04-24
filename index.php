@@ -22,6 +22,7 @@ function e($str) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Littlest — Find Your Perfect Pet</title>
+    <link rel="icon" type="image/png" href="img/logo.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
