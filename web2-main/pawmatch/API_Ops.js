@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════
    FRONTEND API HANDLER
-   Fetches pet facts from backend and updates UI dynamically
+   Fetches pet facts from Api and updates UI dynamically
 ════════════════════════════════════════════ */
 
 /** List of pets that will be shown in order */
