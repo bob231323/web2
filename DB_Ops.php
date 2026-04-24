@@ -20,10 +20,10 @@ if ($isAjaxRequest) {
 require_once "config.php";
 
 /**local host*/
-//$conn = mysqli_connect($servername, $username, $password, $dbname);
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
 /**infinity host*/
-$conn = mysqli_connect("sql107.infinityfree.com", "if0_41745508", "qOiQZFnTaYeuYY", "if0_41745508_pet_app");
+//$conn = mysqli_connect("sql107.infinityfree.com", "if0_41745508", "qOiQZFnTaYeuYY", "if0_41745508_pet_app");
 // Check connection
 if (!$conn) {
     if ($isAjaxRequest) {
