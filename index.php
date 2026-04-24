@@ -1,4 +1,8 @@
 <?php
+/** IMPORTANT NOTE :
+ * you may need to uncomment some lines to woke in local host
+ * go to file DB_Ops.php and uncomment line number 22 and comment line number 25*/
+
 /* ════════════════════════════════════════════
    SERVER-SIDE: Load pets from database via DB_Ops.php
    DB_Ops.php includes root index.php (unchanged) to reuse all

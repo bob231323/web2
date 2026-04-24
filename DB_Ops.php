@@ -18,10 +18,11 @@ if ($isAjaxRequest) {
    DATABASE CONNECTION
 ════════════════════════════════════════════ */
 require_once "config.php";
-////local host
+
+/**local host*/
 //$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-//infinity host
+/**infinity host*/
 $conn = mysqli_connect("sql107.infinityfree.com", "if0_41745508", "qOiQZFnTaYeuYY", "if0_41745508_pet_app");
 // Check connection
 if (!$conn) {
