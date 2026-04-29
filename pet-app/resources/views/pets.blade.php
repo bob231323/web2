@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <!--    used to visualize the api work only , remove it later  -->
+    <title>Pet Facts</title>
+
     <style>
         body {
             background: #f4f6f8;
@@ -9,43 +10,32 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
         }
+
         .card {
             width: 350px;
-            background: #ffffff;
-            border-radius: 15px;
+            background: white;
             padding: 20px;
+            border-radius: 15px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .fact {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
-            min-height: 60px;
-        }
+
         img {
             width: 100%;
             border-radius: 10px;
-            object-fit: cover;
-            max-height: 250px;
-        }
-        .pet-label {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #666;
         }
     </style>
 </head>
 
 <body>
+
 <div class="card">
-    <span class="pet-label">Fun fact : </span><div class="fact" id="fact">Loading fact...</div>
-    <img id="image" src="" alt="Pet Image">
-    <div class="pet-label" id="pet">Loading...</div>
+    <div id="fact">Loading...</div>
+    <img id="image" src="">
+    <div id="pet"></div>
 </div>
-</body>
-<!--this is the only file you need-->
+
 <script src="{{ asset('js/API.js') }}"></script>
+
+</body>
 </html>
