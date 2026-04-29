@@ -13,6 +13,11 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'pet' => [
+        'cat' => env('CAT_API_URL'),
+        'dog' => env('DOG_API_URL'),
+        'bird' => env('BIRD_API_URL'),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

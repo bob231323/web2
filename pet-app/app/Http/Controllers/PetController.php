@@ -3,71 +3,71 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\PetService;
 
+/**
+ * Class PetController
+ *
+ * Handles HTTP requests related to pets and returns pet facts
+ * using the PetService (third-party API integration).
+ *
+ * Responsibilities:
+ * - Receive pet type from request
+ * - Call service layer to fetch data
+ * - Return JSON response to frontend
+ * - Handle API failures gracefully
+ */
 class PetController extends Controller
 {
-    private function callAPI($url)
+    /**
+     * Service instance used to interact with external pet API.
+     *
+     * @var PetService
+     */
+    private PetService $petService;
+
+    /**
+     * PetController constructor.
+     *
+     * Injects the PetService dependency using Laravel's service container.
+     *
+     * @param PetService $petService Service responsible for fetching pet data
+     */
+    public function __construct(PetService $petService)
     {
-        $ch = curl_init();
-
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 2
-        ]);
-
-        $response = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            curl_close($ch);
-            return null;
-        }
-
-        curl_close($ch);
-
-        return json_decode($response, true);
+        $this->petService = $petService;
     }
 
+    /**
+     * Retrieve pet information (fact + image) based on query parameter.
+     *
+     * Example request:
+     *  GET /api/pet?pet=cat
+     *
+     * Flow:
+     * - Reads "pet" from query string (default = cat)
+     * - Calls PetService to fetch data from external API
+     * - Returns JSON response
+     * - If API fails, returns fallback message and default image
+     *
+     * @param Request $request HTTP request containing query parameters
+     * @return \Illuminate\Http\JsonResponse JSON response with pet data or error fallback
+     */
     public function getPet(Request $request)
     {
         $pet = $request->query('pet', 'cat');
 
-        $data = [
-            "pet" => $pet,
-            "fact" => "No data available",
-            "image" => asset("img/default.jpg")
-        ];
+        try {
+            $data = $this->petService->getPet($pet);
 
-        if ($pet == "cat") {
-            $res = $this->callAPI("https://catfact.ninja/fact");
+            return response()->json($data);
 
-            if ($res && isset($res["fact"])) {
-                $data["fact"] = $res["fact"];
-            }
-
-            $data["image"] = asset("img/cat.jpg");
+        } catch (\Exception $e) {
+            return response()->json([
+                "pet" => $pet,
+                "fact" => "API is currently unavailable. Please try again later.",
+                "image" => asset("img/cat.jpg")
+            ], 500);
         }
-
-        elseif ($pet == "dog") {
-            $res = $this->callAPI("https://dogapi.dog/api/v2/facts");
-
-            if ($res && isset($res["data"][0]["attributes"]["body"])) {
-                $data["fact"] = $res["data"][0]["attributes"]["body"];
-            }
-
-            $data["image"] = asset("img/dog.jpg");
-        }
-
-        else {
-            $res = $this->callAPI("https://some-random-api.com/animal/bird");
-
-            if ($res && isset($res["fact"])) {
-                $data["fact"] = $res["fact"];
-            }
-
-            $data["image"] = asset("img/bird.jpg");
-        }
-
-        return response()->json($data);
     }
 }

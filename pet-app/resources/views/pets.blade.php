@@ -10,6 +10,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
         }
 
         .card {
@@ -18,6 +19,7 @@
             padding: 20px;
             border-radius: 15px;
             text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         img {
