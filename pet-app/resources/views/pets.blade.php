@@ -36,7 +36,7 @@
     <img id="image" src="">
     <div id="pet"></div>
 </div>
-
+<!--you only need this line from this file-->
 <script src="{{ asset('js/API.js') }}"></script>
 
 </body>
