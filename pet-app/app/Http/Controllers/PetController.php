@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\PetService;
+use App\Models\Pet;
 
 /**
  * Class PetController
@@ -61,7 +62,6 @@ class PetController extends Controller
             $data = $this->petService->getPet($pet);
 
             return response()->json($data);
-
         } catch (\Exception $e) {
             return response()->json([
                 "pet" => $pet,
@@ -70,4 +70,32 @@ class PetController extends Controller
             ], 500);
         }
     }
+    public function create()
+    {
+        return view('pets.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'type'  => 'required|string|max:255',
+            'breed' => 'required|string|max:255',
+            'age'    => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'image_path' => 'nullable|string',
+        ]);
+
+        Pet::create($validated);
+        return redirect()->route('pets.index')
+                        ->with('success','Pet added successfully !');
+    }
+
+    public function index()
+    {
+        $pets = Pet::all();
+        return view('pets.index',compact('pets'));
+    }
+
+
 }
