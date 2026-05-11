@@ -97,5 +97,45 @@ class PetController extends Controller
         return view('pets.index',compact('pets'));
     }
 
+    // // edit for form data 
+    // public function edit()
+    // {
+    //     return view('pets.edit', compact('pet'));
+    // }
+
+
+
+    // update pet --> fot data base 
+    public function update(Request $request ,Pet $pet){
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'breed' => 'required|string|max:255',
+            'age' => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+
+        // Handle image upload if present
+        $pet->update($validated);
+        return redirect()->route('pets.index')
+            ->with('success', 'Pet updated successfully !');
+
+    }
+
+
+    
+
+
+    // destory 
+    public function destroy(Pet $pet) {
+        //  handel delte img 
+        $pet->delete();
+
+        return redirect()->route('pets.index')
+            ->with('success', 'Pet deleted successfully !');
+
+    }
 
 }
