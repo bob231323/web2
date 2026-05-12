@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\PetService;
 use App\Models\Pet;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class PetController
@@ -75,21 +76,32 @@ class PetController extends Controller
         return view('pets.create');
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'type'  => 'required|string|max:255',
-            'breed' => 'required|string|max:255',
-            'age'    => 'required|integer|min:0',
-            'description' => 'nullable|string',
-            'image_path' => 'nullable|string',
-        ]);
+    public function store(Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'type' => 'required|string|max:255',
+        'breed' => 'required|string|max:255',
+        'age' => 'required|integer|min:0',
+        'description' => 'nullable|string',
 
-        Pet::create($validated);
-        return redirect()->route('pets.index')
-                        ->with('success','Pet added successfully !');
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    // Check if user uploaded image
+    if ($request->hasFile('image')) {
+
+        // Save image inside storage/app/public/pets
+        $path = $request->file('image')->store('pets', 'public');
+
+        // Save image path in database
+        $validated['image_path'] = $path;
     }
+
+    Pet::create($validated);
+
+    return redirect()->route('pets.index')
+        ->with('success', 'Pet added successfully!');
+}
 
     public function index()
     {
@@ -106,23 +118,39 @@ class PetController extends Controller
 
 
     // update pet --> fot data base 
-    public function update(Request $request ,Pet $pet){
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|max:255',
-            'breed' => 'required|string|max:255',
-            'age' => 'required|integer|min:0',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+   public function update(Request $request, Pet $pet) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'type' => 'required|string|max:255',
+        'breed' => 'required|string|max:255',
+        'age' => 'required|integer|min:0',
+        'description' => 'nullable|string',
 
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
-        // Handle image upload if present
-        $pet->update($validated);
-        return redirect()->route('pets.index')
-            ->with('success', 'Pet updated successfully !');
+    // Check if new image uploaded
+    if ($request->hasFile('image')) {
 
+        // Delete old image if exists
+        if ($pet->image_path &&
+            Storage::disk('public')->exists($pet->image_path)) {
+
+            Storage::disk('public')->delete($pet->image_path);
+        }
+
+        // Store new image
+        $path = $request->file('image')->store('pets', 'public');
+
+        // Save new image path
+        $validated['image_path'] = $path;
     }
+
+    $pet->update($validated);
+
+    return redirect()->route('pets.index')
+        ->with('success', 'Pet updated successfully!');
+}
 
 
     
@@ -130,12 +158,18 @@ class PetController extends Controller
 
     // destory 
     public function destroy(Pet $pet) {
-        //  handel delte img 
-        $pet->delete();
+    // Delete image from storage first
+    if ($pet->image_path &&
+        Storage::disk('public')->exists($pet->image_path)) {
 
-        return redirect()->route('pets.index')
-            ->with('success', 'Pet deleted successfully !');
-
+        Storage::disk('public')->delete($pet->image_path);
     }
+
+    // Delete pet from database
+    $pet->delete();
+
+    return redirect()->route('pets.index')
+        ->with('success', 'Pet deleted successfully!');
+}
 
 }
