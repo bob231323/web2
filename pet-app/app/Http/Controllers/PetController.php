@@ -76,100 +76,147 @@ class PetController extends Controller
         return view('pets.create');
     }
 
-    public function store(Request $request) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'type' => 'required|string|max:255',
-        'breed' => 'required|string|max:255',
-        'age' => 'required|integer|min:0',
-        'description' => 'nullable|string',
-
-        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-    ]);
-
-    // Check if user uploaded image
-    if ($request->hasFile('image')) {
-
-        // Save image inside storage/app/public/pets
-        $path = $request->file('image')->store('pets', 'public');
-
-        // Save image path in database
-        $validated['image_path'] = $path;
-    }
-
-    Pet::create($validated);
-
-    return redirect()->route('pets.index')
-        ->with('success', 'Pet added successfully!');
-}
-
-    public function index()
+    public function store(Request $request)
     {
-        $pets = Pet::all();
-        return view('pets.index',compact('pets'));
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|max:255',
+                'breed' => 'nullable|string|max:255',
+                'age' => 'required|integer|min:0',
+                'description' => 'required|string',
+                'image' => 'nullable|file|max:2048',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->validator->errors()->first(),
+                    'errors' => $e->validator->errors()
+                ], 422);
+            }
+            throw $e;
+        }
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('pets', 'public');
+            $validated['image_path'] = $path;
+        }
+
+        $pet = Pet::create($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pet added successfully!',
+                'pet' => $pet,
+                'html' => view('components.pet-card', ['pet' => $pet, 'index' => 0])->render()
+            ]);
+        }
+
+        return redirect()->route('pets.index')->with('success', 'Pet added successfully!');
     }
 
-    // // edit for form data 
-    // public function edit()
-    // {
-    //     return view('pets.edit', compact('pet'));
-    // }
+    public function index(Request $request)
+    {
+        $query = Pet::query();
 
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('breed', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
 
+        if ($request->has('type') && !empty($request->type)) {
+            $query->where('type', $request->type);
+        }
+
+        $pets = $query->select(['id', 'name', 'type', 'breed', 'age', 'description', 'image_path'])
+                      ->orderBy('created_at', 'desc')
+                      ->get();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = '';
+            foreach ($pets as $index => $pet) {
+                $html .= view('components.pet-card', ['pet' => $pet, 'index' => $index])->render();
+            }
+
+            return response()->json([
+                'success' => true,
+                'count' => $pets->count(),
+                'html' => $html,
+                'pets' => $pets
+            ]);
+        }
+
+        return view('pets.index', compact('pets'));
+    }
 
     // update pet --> fot data base 
-   public function update(Request $request, Pet $pet) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'type' => 'required|string|max:255',
-        'breed' => 'required|string|max:255',
-        'age' => 'required|integer|min:0',
-        'description' => 'nullable|string',
+    public function update(Request $request, Pet $pet)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|max:255',
+                'breed' => 'nullable|string|max:255',
+                'age' => 'required|integer|min:0',
+                'description' => 'required|string',
+                'image' => 'nullable|file|max:2048',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->validator->errors()->first(),
+                    'errors' => $e->validator->errors()
+                ], 422);
+            }
+            throw $e;
+        }
 
-        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-    ]);
+        if ($request->hasFile('image')) {
+            if ($pet->image_path && Storage::disk('public')->exists($pet->image_path)) {
+                Storage::disk('public')->delete($pet->image_path);
+            }
+            $path = $request->file('image')->store('pets', 'public');
+            $validated['image_path'] = $path;
+        }
 
-    // Check if new image uploaded
-    if ($request->hasFile('image')) {
+        $pet->update($validated);
 
-        // Delete old image if exists
-        if ($pet->image_path &&
-            Storage::disk('public')->exists($pet->image_path)) {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pet updated successfully!',
+                'pet' => $pet,
+                'html' => view('components.pet-card', ['pet' => $pet, 'index' => 0])->render()
+            ]);
+        }
 
+        return redirect()->route('pets.index')->with('success', 'Pet updated successfully!');
+    }
+
+    // destory 
+    public function destroy(Request $request, Pet $pet)
+    {
+        if ($pet->image_path && Storage::disk('public')->exists($pet->image_path)) {
             Storage::disk('public')->delete($pet->image_path);
         }
 
-        // Store new image
-        $path = $request->file('image')->store('pets', 'public');
+        $pet->delete();
 
-        // Save new image path
-        $validated['image_path'] = $path;
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pet deleted successfully!'
+            ]);
+        }
+
+        return redirect()->route('pets.index')->with('success', 'Pet deleted successfully!');
     }
-
-    $pet->update($validated);
-
-    return redirect()->route('pets.index')
-        ->with('success', 'Pet updated successfully!');
-}
-
-
-    
-
-
-    // destory 
-    public function destroy(Pet $pet) {
-    // Delete image from storage first
-    if ($pet->image_path &&
-        Storage::disk('public')->exists($pet->image_path)) {
-
-        Storage::disk('public')->delete($pet->image_path);
-    }
-
-    // Delete pet from database
-    $pet->delete();
-
-    return redirect()->route('pets.index')
-        ->with('success', 'Pet deleted successfully!');
-}
 
 }

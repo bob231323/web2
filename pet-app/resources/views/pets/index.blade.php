@@ -344,54 +344,7 @@
 
 @push('scripts')
 <script>
-    // Override openConfirm to also store the delete route
-    let _deleteRoute = null;
-
-    function openConfirm(petId, deleteRoute) {
-        _deleteRoute = deleteRoute;
-        document.getElementById('confirm-overlay').classList.add('open');
-    }
-
-    function closeConfirm() {
-        _deleteRoute = null;
-        document.getElementById('confirm-overlay').classList.remove('open');
-    }
-
-    function confirmDelete() {
-        if (!_deleteRoute) return;
-        const form = document.getElementById('delete-form');
-        form.action = _deleteRoute;
-        closeConfirm();
-        form.submit();
-    }
-
-    // Edit modal controls
-    function openEditModal(pet) {
-        const form = document.getElementById('edit-pet-form');
-        form.action = '/pets/' + pet.id;
-
-        document.getElementById('edit-name').value        = pet.name        || '';
-        document.getElementById('edit-type').value        = pet.type        || '';
-        document.getElementById('edit-breed').value       = pet.breed       || '';
-        document.getElementById('edit-age').value         = pet.age         ?? '';
-        document.getElementById('edit-description').value = pet.description || '';
-
-        removeFile('edit');
-        document.getElementById('edit-modal-overlay').classList.add('open');
-    }
-
-    function closeEditModal() {
-        document.getElementById('edit-modal-overlay').classList.remove('open');
-    }
-
-    // Close modals on overlay click
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('edit-modal-overlay').addEventListener('click', function(e) {
-            if (e.target === this) closeEditModal();
-        });
-    });
-
-    // Auto-show flash toasts from server
+    // Auto-show flash toasts from server (for non-AJAX fallbacks)
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.toast-auto-show').forEach(el => {
             el.classList.add('show');

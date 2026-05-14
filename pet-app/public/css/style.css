@@ -526,7 +526,7 @@ body {
 .pet-card-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .pet-card-body {
@@ -831,7 +831,7 @@ body {
 #image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: var(--radius-lg);
     transition: opacity 0.5s ease;
 }
@@ -1083,7 +1083,7 @@ body {
 .file-preview img {
     width: 48px;
     height: 48px;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 4px;
 }
 

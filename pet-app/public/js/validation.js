@@ -296,23 +296,25 @@ function closeAddModal() {
     setLoading("add", false);
 }
 
-/**
- * Open the Edit Pet modal pre-filled with pet data.
+/** Open the Edit Pet modal pre-filled with pet data.
  * @param {Object} pet - pet object from DB { id, name, type, breed, age, description, image_path }
  */
 function openEditModal(pet) {
     const overlay = document.getElementById("edit-modal-overlay");
-    if (!overlay) return;
+    const form = document.getElementById("edit-pet-form");
+    if (!overlay || !form) return;
+    
     _clearValidation("edit");
     removeFile("edit");
 
-    document.getElementById("edit-id").value          = pet.id          || "";
+    // Set form action for AJAX
+    form.action = `/pets/${pet.id}`;
+
     document.getElementById("edit-name").value        = pet.name        || "";
     document.getElementById("edit-type").value        = pet.type        || "";
     document.getElementById("edit-breed").value       = pet.breed       || "";
     document.getElementById("edit-age").value         = pet.age         || "";
     document.getElementById("edit-description").value = pet.description || "";
-    document.getElementById("edit-existing-image").value = pet.image_path || "";
 
     overlay.classList.add("open");
     document.getElementById("edit-name").focus();
@@ -450,12 +452,38 @@ function removeFile(prefix) {
 
 /* Drag-and-drop visual feedback */
 document.addEventListener("DOMContentLoaded", () => {
-    ["add-upload-area", "edit-upload-area"].forEach(areaId => {
+    ["add", "edit"].forEach(prefix => {
+        const areaId = `${prefix}-upload-area`;
         const area = document.getElementById(areaId);
-        if (!area) return;
-        area.addEventListener("dragover",  (e) => { e.preventDefault(); area.classList.add("dragover"); });
-        area.addEventListener("dragleave", ()  => { area.classList.remove("dragover"); });
-        area.addEventListener("drop",      (e) => { e.preventDefault(); area.classList.remove("dragover"); });
+        const input = document.getElementById(`${prefix}-image`);
+        
+        if (!area || !input) return;
+
+        area.addEventListener("dragover",  (e) => { 
+            e.preventDefault(); 
+            area.classList.add("dragover"); 
+        });
+
+        area.addEventListener("dragleave", ()  => { 
+            area.classList.remove("dragover"); 
+        });
+
+        area.addEventListener("drop",      (e) => { 
+            e.preventDefault(); 
+            area.classList.remove("dragover"); 
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                // Assign the dropped file to the file input
+                input.files = e.dataTransfer.files;
+                // Trigger the preview and validation logic
+                handleFileSelect(input, prefix);
+            }
+        });
+
+        // Make the entire area clickable to trigger the hidden file input
+        area.addEventListener("click", () => {
+            input.click();
+        });
     });
 });
 
@@ -579,11 +607,11 @@ function toggleMobileMenu() {
  * Called when Search button is clicked.
  * Calls window.onSearch({ query, type }) if the function is set.
  */
-function handleSearch() {
+function handleSearch(immediate = false) {
     const query = (document.getElementById("search-input")?.value || "").trim();
     const type  = document.getElementById("type-filter")?.value || "";
     if (typeof window.onSearch === "function") {
-        window.onSearch({ query, type });
+        window.onSearch({ query, type, immediate });
     }
 }
 
@@ -607,18 +635,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const filter = document.getElementById("type-filter");
 
     if (input) {
-        // Search as the user types.
-        input.addEventListener("input", () => handleSearch());
+        // Search as the user types (debounced)
+        input.addEventListener("input", () => handleSearch(false));
     }
 
     if (filter) {
-        // Re-run search when type filter changes.
-        filter.addEventListener("change", () => handleSearch());
+        // Re-run search when type filter changes (immediate)
+        filter.addEventListener("change", () => handleSearch(true));
     }
 
     if (input) {
         input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") handleSearch();
+            if (e.key === "Enter") handleSearch(true);
         });
     }
 });

@@ -28,7 +28,7 @@
                 Edit
             </button>
             <button class="btn-delete"
-                onclick="openConfirm({{ $pet->id }}, '{{ route('pets.destroy', $pet->id) }}')">
+                onclick="openConfirm({{ $pet->id }})">
                 Delete
             </button>
         </div>
