@@ -21,7 +21,7 @@
     @include('partials.footer')
 
     <script src="{{ asset('js/validation.js') }}"></script>
-    <script src="{{ asset('js/API_Ops.js') }}"></script>
+    <script src="{{ asset('js/API.js') }}"></script>
     <script src="{{ asset('js/app.js') }}"></script>
     @stack('scripts')
 
