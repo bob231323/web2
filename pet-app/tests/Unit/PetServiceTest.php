@@ -7,75 +7,88 @@ use Tests\TestCase;
 
 class PetServiceTest extends TestCase
 {
-    public function test_get_pet_returns_correct_structure(): void
+    public function test_get_pet_returns_correct_structure_for_cat(): void
     {
-        $mock = $this->getMockBuilder(PetService::class)
-            ->onlyMethods(['getPet'])
+        // Mock only callAPI, let real getPet() run
+        $service = $this->getMockBuilder(PetService::class)
+            ->onlyMethods(['callAPI'])
             ->getMock();
 
-        $mock->method('getPet')->willReturn([
-            'pet'   => 'cat',
-            'fact'  => 'Cats sleep 16 hours a day.',
-            'image' => 'http://localhost/img/cat.jpg',
+        $service->method('callAPI')->willReturn([
+            'fact' => 'Cats sleep 16 hours a day.'
         ]);
 
-        $result = $mock->getPet('cat');
+        $result = $service->getPet('cat'); // ← real getPet() runs now
 
         $this->assertArrayHasKey('pet', $result);
         $this->assertArrayHasKey('fact', $result);
         $this->assertArrayHasKey('image', $result);
         $this->assertEquals('cat', $result['pet']);
+        $this->assertEquals('Cats sleep 16 hours a day.', $result['fact']);
     }
 
-    public function test_get_pet_returns_fallback_on_api_failure(): void
+    public function test_get_pet_returns_correct_fact_for_dog(): void
     {
-        $mock = $this->getMockBuilder(PetService::class)
-            ->onlyMethods(['getPet'])
+        $service = $this->getMockBuilder(PetService::class)
+            ->onlyMethods(['callAPI'])
             ->getMock();
 
-        $mock->method('getPet')->willReturn([
-            'pet'   => 'cat',
-            'fact'  => 'No data available',
-            'image' => 'http://localhost/img/cat.jpg',
+        // Dog API returns a different structure — your real switch handles this
+        $service->method('callAPI')->willReturn([
+            'data' => [
+                ['attributes' => ['body' => 'Dogs are loyal animals.']]
+            ]
         ]);
 
-        $result = $mock->getPet('cat');
-
-        $this->assertEquals('No data available', $result['fact']);
-    }
-
-    public function test_get_pet_supports_dog_type(): void
-    {
-        $mock = $this->getMockBuilder(PetService::class)
-            ->onlyMethods(['getPet'])
-            ->getMock();
-
-        $mock->method('getPet')->willReturn([
-            'pet'   => 'dog',
-            'fact'  => 'Dogs are loyal animals.',
-            'image' => 'http://localhost/img/dog.jpg',
-        ]);
-
-        $result = $mock->getPet('dog');
+        $result = $service->getPet('dog'); // ← real switch case 'dog' runs
 
         $this->assertEquals('dog', $result['pet']);
+        $this->assertEquals('Dogs are loyal animals.', $result['fact']);
         $this->assertStringContainsString('dog.jpg', $result['image']);
     }
 
     public function test_get_pet_defaults_to_bird_for_unknown_type(): void
     {
-        $mock = $this->getMockBuilder(PetService::class)
-            ->onlyMethods(['getPet'])
+        $service = $this->getMockBuilder(PetService::class)
+            ->onlyMethods(['callAPI'])
             ->getMock();
 
-        $mock->method('getPet')->willReturn([
-            'pet'   => 'hen',
-            'fact'  => 'No data available',
-            'image' => 'http://localhost/img/bird.jpg',
+        $service->method('callAPI')->willReturn([
+            'fact' => 'Birds can fly.'
         ]);
 
-        $result = $mock->getPet('hen');
+        $result = $service->getPet('hen'); // ← real default case runs
 
+        $this->assertEquals('hen', $result['pet']);
+        $this->assertEquals('Birds can fly.', $result['fact']);
         $this->assertStringContainsString('bird.jpg', $result['image']);
+    }
+
+    public function test_get_pet_returns_fallback_when_api_fails(): void
+    {
+        $service = $this->getMockBuilder(PetService::class)
+            ->onlyMethods(['callAPI'])
+            ->getMock();
+
+        // Simulate cURL failure — callAPI returns null
+        $service->method('callAPI')->willReturn(null);
+
+        $result = $service->getPet('cat'); // ← real getPet() handles null response
+
+        $this->assertEquals('No data available', $result['fact']);
+    }
+
+    public function test_get_pet_returns_fallback_when_api_returns_wrong_structure(): void
+    {
+        $service = $this->getMockBuilder(PetService::class)
+            ->onlyMethods(['callAPI'])
+            ->getMock();
+
+        // API returns something unexpected — missing 'fact' key
+        $service->method('callAPI')->willReturn(['unexpected_key' => 'value']);
+
+        $result = $service->getPet('cat'); // ← real isset($res['fact']) check runs
+
+        $this->assertEquals('No data available', $result['fact']);
     }
 }
