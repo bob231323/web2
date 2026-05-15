@@ -9,7 +9,6 @@ class PetServiceTest extends TestCase
 {
     public function test_get_pet_returns_correct_structure_for_cat(): void
     {
-        // Mock only callAPI, let real getPet() run
         $service = $this->getMockBuilder(PetService::class)
             ->onlyMethods(['callAPI'])
             ->getMock();
@@ -18,7 +17,7 @@ class PetServiceTest extends TestCase
             'fact' => 'Cats sleep 16 hours a day.'
         ]);
 
-        $result = $service->getPet('cat'); // ← real getPet() runs now
+        $result = $service->getPet('cat'); 
 
         $this->assertArrayHasKey('pet', $result);
         $this->assertArrayHasKey('fact', $result);
@@ -33,14 +32,14 @@ class PetServiceTest extends TestCase
             ->onlyMethods(['callAPI'])
             ->getMock();
 
-        // Dog API returns a different structure — your real switch handles this
+    
         $service->method('callAPI')->willReturn([
             'data' => [
                 ['attributes' => ['body' => 'Dogs are loyal animals.']]
             ]
         ]);
 
-        $result = $service->getPet('dog'); // ← real switch case 'dog' runs
+        $result = $service->getPet('dog'); 
 
         $this->assertEquals('dog', $result['pet']);
         $this->assertEquals('Dogs are loyal animals.', $result['fact']);
@@ -57,7 +56,7 @@ class PetServiceTest extends TestCase
             'fact' => 'Birds can fly.'
         ]);
 
-        $result = $service->getPet('hen'); // ← real default case runs
+        $result = $service->getPet('hen'); 
 
         $this->assertEquals('hen', $result['pet']);
         $this->assertEquals('Birds can fly.', $result['fact']);
@@ -73,7 +72,7 @@ class PetServiceTest extends TestCase
         // Simulate cURL failure — callAPI returns null
         $service->method('callAPI')->willReturn(null);
 
-        $result = $service->getPet('cat'); // ← real getPet() handles null response
+        $result = $service->getPet('cat'); 
 
         $this->assertEquals('No data available', $result['fact']);
     }
@@ -87,7 +86,7 @@ class PetServiceTest extends TestCase
         // API returns something unexpected — missing 'fact' key
         $service->method('callAPI')->willReturn(['unexpected_key' => 'value']);
 
-        $result = $service->getPet('cat'); // ← real isset($res['fact']) check runs
+        $result = $service->getPet('cat'); 
 
         $this->assertEquals('No data available', $result['fact']);
     }
