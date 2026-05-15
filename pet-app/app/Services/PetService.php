@@ -21,7 +21,7 @@ class PetService
      * @param string $url The API endpoint URL
      * @return array|null Decoded JSON response as associative array, or null on failure
      */
-    private function callAPI($url)
+    protected function callAPI($url)
     {
         $ch = curl_init();
 
